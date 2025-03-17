@@ -1,0 +1,327 @@
+<!DOCTYPE html>
+<html>
+  <head>
+
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
+    <base target="_top">
+    <style>
+      body {
+        font-family: Arial, sans-serif;
+        text-align: center;
+        background-color: #f4f4f9;
+        padding: 10px;
+      }
+
+  
+      .input-box {
+        width: 75%;
+        padding: 8px;
+        margin: 5px 0;
+        font-size: 14px;
+        border-radius: 10px;
+        border: 1px solid #ccc;
+      }
+
+  
+      .button {
+        background-color: #8BC34A;
+        color: white;
+        padding: 8px 30px;
+        border: none;
+        border-radius: 10px;
+        cursor: pointer;
+        font-size: 14px;
+      }
+
+    
+      .button:hover {
+        background-color: #81C784;
+      }
+
+   
+      input[type="file"] {
+        display: none;
+      }
+
+      .custom-file-button {
+        background-color: #8BC34A;
+        color: white;
+        padding: 8px 30px;
+        border: none;
+        border-radius: 10px;
+        cursor: pointer;
+        font-size: 14px;
+        margin-bottom: 10px;
+      }
+
+      /* Email section */
+      #emailSection {
+        display: none;
+        margin-top: 10px;
+      }
+
+      #fileName {
+        margin-top: 10px;
+        font-size: 12px;
+        color: #555;
+      }
+
+     
+      .add-email {
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        margin-top: 10px;
+      }
+
+      .icon-button {
+        background-color: #8BC34A;
+        color: white;
+        padding: 10px;
+        border: none;
+        border-radius: 50%;
+        cursor: pointer;
+        font-size: 18px;
+        margin: 0 10px;
+      }
+
+      .icon-button i {
+        color: white; /* White color for icons */
+      }
+
+      /* Styling for the input field and add email button when revealed */
+      #newEmailContainer {
+        display: none;
+        margin-top: 10px;
+      }
+
+      #progressContainer {
+        display: none;
+        margin-top: 10px;
+        text-align: center;
+      }
+
+      #progressBar {
+        width: 100%;
+        background-color: #f3f3f3;
+        border: 1px solid #ccc;
+      }
+
+      #progressBar div {
+        height: 24px;
+        width: 0;
+        background-color: #4caf50;
+        text-align: center;
+        line-height: 24px;
+        color: white;
+        transition: width 0.3s;
+      }
+
+      #output {
+        margin-top: 10px;
+      }
+
+   
+      #sendEmailContainer {
+        display: block;
+        margin-bottom: 10px;
+        text-align: center;
+      }
+
+      #sendEmailCheckbox {
+        margin-left: 10px;
+      }
+
+    </style>
+  </head>
+  <body onload="loadEmailList()"> <!-- Load the email list on popup open -->
+    <form id="uploadForm">
+      <label for="folderName">Enter Folder Name:</label><br>
+      <input type="text" id="folderName" class="input-box" name="folderName" required><br><br>
+      
+      <label for="subFolderName">Enter Subfolder Name (or Cell Name):</label><br>
+      <input type="text" id="subFolderName" class="input-box" name="subFolderName" required><br><br>
+
+      <!-- Custom Choose Files button -->
+      <label class="custom-file-button" for="myFile">Choose Files</label>
+      <input type="file" id="myFile" multiple onchange="showFileNames()">
+      <p id="fileName">No files chosen</p>
+
+      <br><br>
+      <!-- Centered Send Email checkbox and label -->
+      <div id="sendEmailContainer">
+        <label id="sendEmailLabel" for="sendEmailCheckbox">Send Email?</label>
+        <input type="checkbox" id="sendEmailCheckbox" onclick="toggleEmailSection()">
+      </div>
+
+
+      <div id="emailSection">
+        <label for="emailRecipients">Select Email Recipients (Ctrl+click to deselect):</label><br>
+        <select id="emailRecipients" class="input-box" multiple>
+        </select>
+
+        <!-- Icon buttons for adding and deleting email -->
+        <div class="add-email">
+          <button type="button" class="icon-button" onclick="toggleNewEmailInput()">
+            <i class="fas fa-pencil-alt"></i> <!-- Font Awesome Pencil Icon -->
+          </button>
+          <button type="button" class="icon-button" onclick="deleteSelectedEmail()">
+            <i class="fas fa-trash-alt"></i> <!-- Font Awesome Trash Icon -->
+          </button>
+        </div>
+
+        <!-- New email input container -->
+        <div id="newEmailContainer">
+          <input type="text" id="newEmail" class="input-box" placeholder="Enter new email"><br>
+          <button type="button" class="button" onclick="addEmail()">Add Email</button>
+        </div>
+
+        <br><br>
+        <label for="emailSubject">Email Subject:</label><br>
+        <input type="text" id="emailSubject" class="input-box"><br><br>
+
+        <label for="emailBody">Email Body:</label><br>
+        <textarea id="emailBody" class="input-box" rows="4"></textarea><br><br>
+      </div>
+
+      <input type="button" value="Submit" class="button" onclick="submitFolderData()">
+    </form>
+
+    <div id="progressContainer">
+      <p>Uploading... Please wait.</p>
+      <div id="progressBar">
+        <div></div>
+      </div>
+    </div>
+
+    <div id="output"></div>
+
+    <script>
+      function showFileNames() {
+        var fileInput = document.getElementById("myFile");
+        var fileNames = Array.from(fileInput.files).map(file => file.name).join(', ');
+        document.getElementById("fileName").innerText = fileNames || "No files chosen";
+      }
+
+      function toggleEmailSection() {
+        var emailSection = document.getElementById("emailSection");
+        emailSection.style.display = document.getElementById("sendEmailCheckbox").checked ? "block" : "none";
+      }
+
+      function toggleNewEmailInput() {
+        var newEmailContainer = document.getElementById("newEmailContainer");
+        newEmailContainer.style.display = newEmailContainer.style.display === "none" ? "block" : "none";
+      }
+
+      function addEmail() {
+        var newEmail = document.getElementById("newEmail").value;
+        var emailDropdown = document.getElementById("emailRecipients");
+        if (newEmail) {
+          var option = document.createElement("option");
+          option.value = newEmail;
+          option.text = newEmail;
+          emailDropdown.add(option);
+
+          // Save to local storage
+          saveEmailList(newEmail);
+
+          document.getElementById("newEmail").value = "";
+        }
+      }
+
+      function deleteSelectedEmail() {
+        var emailDropdown = document.getElementById("emailRecipients");
+        var selectedOptions = Array.from(emailDropdown.selectedOptions);
+
+        // Remove each selected option
+        selectedOptions.forEach(function(option) {
+          emailDropdown.remove(option.index);
+        });
+
+        // Update local storage
+        saveEmailList();
+      }
+
+      function loadEmailList() {
+        var storedEmails = JSON.parse(localStorage.getItem("emailList")) || [];
+        var emailDropdown = document.getElementById("emailRecipients");
+
+        storedEmails.forEach(function(email) {
+          var option = document.createElement("option");
+          option.value = email;
+          option.text = email;
+          emailDropdown.add(option);
+        });
+      }
+
+      function saveEmailList(newEmail = null) {
+        var emailDropdown = document.getElementById("emailRecipients");
+        var emailOptions = Array.from(emailDropdown.options);
+        var emailList = emailOptions.map(option => option.value);
+
+        if (newEmail && !emailList.includes(newEmail)) {
+          emailList.push(newEmail);
+        }
+
+        // Save the updated email list to local storage
+        localStorage.setItem("emailList", JSON.stringify(emailList));
+      }
+
+      function submitFolderData() {
+        var folderName = document.getElementById("folderName").value;
+        var subFolderName = document.getElementById("subFolderName").value;
+        var fileInput = document.getElementById("myFile");
+        var files = fileInput.files;
+
+        var sendEmail = document.getElementById("sendEmailCheckbox").checked;
+        var emailRecipients = Array.from(document.getElementById("emailRecipients").selectedOptions).map(option => option.value);
+        var emailSubject = document.getElementById("emailSubject").value;
+        var emailBody = document.getElementById("emailBody").value;
+
+        if (!folderName || !subFolderName || files.length === 0) {
+          alert("Please enter folder names and select files.");
+          return;
+        }
+
+        var fileDataArray = [];
+        document.getElementById("progressContainer").style.display = 'block';
+        updateProgress(20); 
+
+        var reader = new FileReader();
+
+        function readFile(index) {
+          if (index >= files.length) {
+            google.script.run.withSuccessHandler(function(response) {
+              document.getElementById("output").innerHTML = response;
+              updateProgress(100); 
+              setTimeout(function() {
+                google.script.host.close(); 
+              }, 1500);
+            }).uploadFiles(folderName, subFolderName, fileDataArray, sendEmail, emailRecipients, emailSubject, emailBody);
+            return;
+          }
+
+          var file = files[index];
+          reader.onload = function(e) {
+            fileDataArray.push({
+              base64: e.target.result.split(',')[1], // Get Base64 content
+              fileName: file.name,
+              mimeType: file.type
+            });
+            updateProgress(40 + (index + 1) * 20); // Increment progress
+            readFile(index + 1); // Read the next file
+          };
+          reader.readAsDataURL(file);
+        }
+
+        readFile(0); // Start reading files
+      }
+
+      function updateProgress(value) {
+        var progressBar = document.getElementById("progressBar").firstElementChild;
+        progressBar.style.width = value + '%';
+        progressBar.innerHTML = value + '%';
+      }
+    </script>
+  </body>
+</html>
